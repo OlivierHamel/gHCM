@@ -105,10 +105,8 @@ std::string hcm_build_opts(cl::Device const& device
               << " -D WORKGROUP_SIZE="
                 << max<u32>(1u, u32(config.workers_overload * k_hack_device_pref_wg_size))
               << " -D ENABLE_CACHE_COST=" << cache_mode_on(HcmConfig::CacheMode::Cost)
-              << " -D ENABLE_CACHE_TIME=" << cache_mode_on(HcmConfig::CacheMode::Time);
-
-    if (device.getInfo<CL_DEVICE_TYPE>() & CL_DEVICE_TYPE_CPU)
-        build_opt << " -D DEVICE_IS_CPU";
+              << " -D ENABLE_CACHE_TIME=" << cache_mode_on(HcmConfig::CacheMode::Time)
+              << " -I \"./data\"";
 
     return build_opt.str();
 }
