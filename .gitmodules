@@ -1,0 +1,12 @@
+[submodule "lib/glm"]
+	path = lib/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "lib/docopt"]
+	path = lib/docopt
+	url = https://github.com/docopt/docopt.cpp.git
+[submodule "lib/optional"]
+	path = lib/optional
+	url = https://github.com/akrzemi1/Optional.git
+[submodule "lib/stb"]
+	path = lib/stb
+	url = https://github.com/nothings/stb.git
