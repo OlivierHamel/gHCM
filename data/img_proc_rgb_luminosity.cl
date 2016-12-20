@@ -13,9 +13,7 @@ kernel void img_proc_rgb_luminosity(global float const input [/*3 * size.x * siz
     assert(idx                  <  dim_size(img_size) );
 
     float3 const k_rgb_to_luminosity  = (float3)(0.299, 0.587, 0.114);
-    float3 const rgb                  = (float3)(input[idx * 3 + 0]
-                                                ,input[idx * 3 + 1]
-                                                ,input[idx * 3 + 2]);
+    float3 const rgb                  = vload3(idx, input);
     output[idx] = dot(rgb, k_rgb_to_luminosity);
 }
 
