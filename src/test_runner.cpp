@@ -3,62 +3,40 @@
 #include "eikonal.h"
 #include "util_field.h"
 #include "util_files.h"
+#include "field_loaders.h"
 
 
 namespace {
 
-struct STB_Img_Grayscale {
-    int     w = -1, h = -1;
-    float*  data/*[w*h]*/ = nullptr;
+auto const k_fim_minimum_change = 1e-3f;
+auto const k_num_trials         = 5;
 
-    STB_Img_Grayscale() = default;
-    STB_Img_Grayscale(STB_Img_Grayscale const&) = delete;
-    STB_Img_Grayscale(STB_Img_Grayscale&& m) { *this = std::move(m); }
-    ~STB_Img_Grayscale() { stbi_image_free(data); }
-
-    STB_Img_Grayscale& operator=(STB_Img_Grayscale&& m) {
-        std::swap(h     , m.h   );
-        std::swap(w     , m.w   );
-        std::swap(data  , m.data);
-        return *this;
-    }
-
-    static optional<STB_Img_Grayscale> file_load(char const* const fileName) {
-        auto const file_data = file_read_all<stbi_uc>(fileName);
-        if (!file_data) return {};
-
-        STB_Img_Grayscale img {};
-        img.data = stbi_loadf_from_memory(file_data->data(), file_data->size()
-                                         ,&img.w, &img.h, nullptr, STBI_grey);
-        if (!img.data) {
-            std::cout << "Failed to load image grayscale: " << fileName << "\n";
-            std::cout << "\tError: " << stbi_failure_reason() << "\n";
-            return {};
-        }
-
-        assert(0 < img.w);
-        assert(0 < img.h);
-        return std::move(img);
-    }
-};
-
-
-Field2D<float> field_cost_from_img(char const* const file_path, bool const invert_img = true) {
-    auto const img_data = STB_Img_Grayscale::file_load(file_path);
-    if (!img_data) {
+template<typename F /* char const -> optional<Field2D<float>> */>
+Field2D<float> field_load_checked(char const* const file_path, F&& f) {
+    auto field = f(file_path);
+    if (!field) {
         std::cout << "Failed to load img file: " << file_path << "\n";
         exit(-1);
-        return {};
+        return{ };
     }
 
-    auto field = Field2D<float>({ img_data->w, img_data->h }, img_data->data);
-    if (invert_img)
-        for (auto& v : field.backing_store()) v = 1 / v; // invert so black = inf cost, white = 1
-    else
-        for (auto& v : field.backing_store()) v = max(v, 0.001f);
-
-    return field;
+    return std::move(*field);
 }
+
+Field2D<float> field_speed_from_img(char const* const file_path)
+{ return field_load_checked(file_path, field2d_img_monochannel); }
+
+Field2D<float> field_speed_from_img_luminosity(char const* const file_path)
+{ return field_load_checked(file_path, field2d_img_rgb_luminosity); }
+
+Field2D<float> field_cost_from_speed(Field2D<float> f) {
+    for (auto& v : f.backing_store()) v = 1 / v;
+
+    return f;
+}
+
+Field2D<float> field_cost_from_img(char const* const file_path)
+{ return field_cost_from_speed(field_speed_from_img(file_path)); }
 
 Field2D<float> field_cost_constant(uvec2 const sz)
 { return Field2D<float>(sz, 1.f); }
@@ -90,14 +68,11 @@ Field2D<float> field_cost_random(uvec2 const sz, size_t seed) {
     });
 }
 
-void field_cost_mutate_to_permeable(Field2D<float>& f, float const inf_replacement = 1e3) {
+Field2D<float> field_cost_as_permeable(Field2D<float> f, float const inf_replacement = 1e3) {
     for (auto&& f : f.backing_store())
         f = std::min(f, inf_replacement);
-}
 
-Field2D<float> field_cost_as_permeable(Field2D<float> f, float const inf_replacement = 1e3) {
-    field_cost_mutate_to_permeable(f, inf_replacement);
-    return std::move(f);
+    return f;
 }
 
 
@@ -134,11 +109,6 @@ T task_async_get(char const* name, std::future<BenchmarkAsyncResult<T>> f) {
 }
 
 
-
-
-auto const k_fim_minimum_change = 1e-3f;
-auto const k_num_trials         = 5;
-
 struct Job {
     std::string     name;
     Field2D<float>  field;
@@ -146,7 +116,7 @@ struct Job {
 
 using SolverFn = std::function<EikonalResult(Field2D<float> const&, std::vector<uint2> const&)>;
 
-auto const config_name = [&](HcmConfig const& config) {
+std::string hcm_config_name(HcmConfig const& config) {
     auto const kernel_mode = ([&] {
         switch (config.kernel) {
             case HcmConfig::Kernel::Systolic: return "systolic";
@@ -264,11 +234,13 @@ void test_ghcm(cl::Device          const& device
                         c.compute_unit_overload = compute_overload;
                         c.block_size            = block_size;
                         c.cache_mode            = cache_mode;
-                        auto info = eikonal_hcm_opencl_setup(device, c); assert(info);
-                        if (info)
-                            test_run(config_name(c), jobs, seeds, std::bind(eikonal_hcm_opencl_ex, *info, std::placeholders::_1, std::placeholders::_2));
+
+                        if (auto info = eikonal_hcm_opencl_setup(device, c))
+                            test_run(hcm_config_name(c), jobs, seeds
+                                    ,std::bind(eikonal_hcm_opencl_ex, *info
+                                              ,std::placeholders::_1, std::placeholders::_2));
                         else
-                            std::cout << "\n\nError: Failed setup for: " << config_name(c) << "\n\n\n";
+                            std::cerr << "\n\nError: Failed setup for: " << hcm_config_name(c) << "\n\n\n";
                     }
                 }
             }
@@ -309,21 +281,24 @@ void test_ghcm(cl::Device          const& device
 
 
 void tests_all(cl::Platform const&, cl::Device const& device) {
-#if 0
+#if 1
     HcmConfig hcm_config_base {};
     hcm_config_base.fim_minimum_change      = k_fim_minimum_change;
     hcm_config_base.cache_mode              = HcmConfig::CacheMode::Both;
-    hcm_config_base.kernel                  = HcmConfig::Kernel::Systolic;
-    hcm_config_base.compute_unit_overload   = 2222; // high enough and we're basically Block FIM
+    hcm_config_base.kernel                  = HcmConfig::Kernel::FIM;
+    hcm_config_base.compute_unit_overload   = 10; // high enough and we're basically Block FIM
     hcm_config_base.workers_overload        = 1;
     hcm_config_base.block_size              = 8;
-    auto const field = field_cost_as_permeable(field_cost_from_img("data/7_ring_4096_2d.png"));
-    //file_write_time_field("data/cost_field.png", field);
-    file_write_time_field("data/tmp.png", eikonal_hcm_opencl(device, hcm_config_base, field, {uint2(0)}).field);
+    auto const field = field_speed_from_img_luminosity("data/twin_foals.jpeg");
+    file_write_time_field("data/cost_field.png", field);
+
+    auto const output = eikonal_hcm_opencl(device, hcm_config_base, field, {uint2(0)}).field;
+    file_write_field_hdr("data/tmp.hdr", output);
+    file_write_time_field("data/tmp.png", output);
 #else
     auto const problem_7ring    = field_cost_from_img("data/7_ring_4096_2d.png");
     auto const problem_cloudy   = field_cost_from_img("data/cloudy_4096_2d.png");
-    auto const problem_equine   = field_cost_from_img("data/denormal_scale_equine.png", false);
+    auto const problem_equine   = field_speed_from_img("data/denormal_scale_equine.png");
     auto const parameteric_sz   = uvec2(1u << 12);
     auto const seed_points      = std::vector<uint2> { uint2(0) };//field_cost.size() / uint2(2) };
     std::vector<Job> jobs

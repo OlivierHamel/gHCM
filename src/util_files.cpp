@@ -34,6 +34,18 @@ optional<size_t> file_size(FILE* const f) {
     return len;
 }
 
+bool file_write_field_hdr(char const*    const  file_name
+                         ,Field2D<float> const& field_time) {
+    auto const err = stbi_write_hdr(file_name, field_time.size().x, field_time.size().y, STBI_grey
+                                   ,field_time.backing_store().data());
+    if (err == 0) {
+        std::cerr << "Failed to write hdr output.\n";
+        return false;
+    }
+
+    return true;
+}
+
 bool file_write_time_field(char const*    const  file_name
                           ,Field2D<float> const& field_time) {
     float f_min = INFINITY, f_max = -INFINITY;
@@ -72,7 +84,7 @@ bool file_write_time_field(char const*    const  file_name
     auto const err = stbi_write_png(file_name, field_time.size().x, field_time.size().y, STBI_rgb
                                    ,hued_pixels.data(), hued_pixels.size() / field_time.size().y);
     if (err == 0) {
-        std::cout << "Failed to write output.\n";
+        std::cerr << "Failed to write output.\n";
         return false;
     }
 

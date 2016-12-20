@@ -14,6 +14,9 @@ bool file_write_time_field(char const*    const  file_name
                           ,float          const  f_min
                           ,float          const  f_max);
 
+bool file_write_field_hdr (char const*    const  file_name
+                          ,Field2D<float> const& field_time);
+
 
 template<typename T>
 optional<std::vector<T>> file_read_all(char const* const fileName) {
