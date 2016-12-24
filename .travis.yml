@@ -1,8 +1,28 @@
 language: c++
 
-compiler:
-  - clang
-  - gcc
+# Wew-lad, apparently travis is still running gcc 4.6. This is *unacceptable*.
+sudo: required
+dist: trusty
+
+matrix:
+  include:
+    - compiler: gcc
+      env: COMPILER=g++-5
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+    - compiler: clang
+      env: COMPILER=clang++-3.7
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+          packages:
+            - clang-3.7
 
 before_install:
 # download & setup AMD OpenCL SDK (easiest, offers a CPU solution)
