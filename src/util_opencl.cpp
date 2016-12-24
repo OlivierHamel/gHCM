@@ -36,7 +36,7 @@ std::string display_format_mem(cl_ulong const bytes) {
         f /= 1024;
 
     char buffer[512];
-    sprintf_s(buffer, "%f %s", f, k_suffixes[scale]);
+    snprintf(buffer, length_of(buffer), "%f %s", f, k_suffixes[scale]);
     return buffer;
 }
 
@@ -133,7 +133,12 @@ optional<cl_device_type> cl_device_type_parse(char const* const s) {
 
     cl_device_type  device_type = 0;
     for (auto&& p : parts) {
-        auto const matches = [&](char const* const k) { return _strcmpi(p.c_str(), k) == 0; };
+#if _WIN32
+        auto const matches = [&](char const* const k) { return _strcmpi  (p.c_str(), k) == 0; };
+#else
+        auto const matches = [&](char const* const k) { return strcasecmp(p.c_str(), k) == 0; };
+#endif
+
              if (matches("all"          )) return CL_DEVICE_TYPE_ALL;
         else if (matches("cpu"          )) device_type |= CL_DEVICE_TYPE_CPU;
         else if (matches("gpu"          )) device_type |= CL_DEVICE_TYPE_GPU;

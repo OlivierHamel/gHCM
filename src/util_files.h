@@ -21,11 +21,10 @@ bool file_write_field_hdr (char const*    const  file_name
 template<typename T>
 optional<std::vector<T>> file_read_all(char const* const fileName) {
     assert(fileName && *fileName);
-    if (!fileName) return {};
+    if (!fileName ) return {};
 
-    FILE* f = nullptr;
-    if (fopen_s(&f, fileName, "rb") != 0) return {};
-    if (!f                              ) return {};
+    auto const f = fopen(fileName, "rb");
+    if (!f        ) return {};
 
     auto const size = file_size(f);
     if (!size                           ) { fclose(f); return {}; }

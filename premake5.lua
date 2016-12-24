@@ -2,8 +2,8 @@
 
 local bIsWindows    = os.get() == "windows"
 -- \todo Add OCL for NV? Then again, they give a damn about OCL support so why bother.
-local strOclIncDir  = bIsWindows and "$(AMDAPPSDKROOT)/include"     or ""
-local strOclLibDir  = bIsWindows and "$(AMDAPPSDKROOT)/lib/x86_64"  or ""
+local strOclIncDir  = bIsWindows and "$(AMDAPPSDKROOT)/include"     or "$(HOME)/AMDAPPSDK/include"
+local strOclLibDir  = bIsWindows and "$(AMDAPPSDKROOT)/lib/x86_64"  or "$(HOME)/AMDAPPSDK/lib/x86_64"
 
 workspace "gHCM"
    configurations { "debug", "release" }
@@ -29,7 +29,7 @@ project "gHCM"
   flags       { }
 
   filter { "system:linux" }
-    buildoptions { "-std=c++0x" }
+    buildoptions { "-std=c++14" }
 
   filter "configurations:debug"
     defines   { "DEBUG"   }

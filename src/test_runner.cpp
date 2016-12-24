@@ -53,7 +53,7 @@ Field2D<float> field_cost_parameteric(uvec2 const sz, F&& f) {
 Field2D<float> field_cost_sin_checkerboard(uvec2 const sz, float const speed_amplitude
                                                          , float const checkerboard_res) {
     return field_cost_parameteric(sz, [&](vec2 const xy) {
-        auto const v = sin(checkerboard_res * 2 * M_PI * xy);
+        auto const v = sin(float(checkerboard_res * 2 * M_PI) * xy);
         return float(1 + speed_amplitude * v.x * v.y);
     });
 }
@@ -69,8 +69,8 @@ Field2D<float> field_cost_random(uvec2 const sz, size_t seed) {
 }
 
 Field2D<float> field_cost_as_permeable(Field2D<float> f, float const inf_replacement = 1e3) {
-    for (auto&& f : f.backing_store())
-        f = std::min(f, inf_replacement);
+    for (auto&& x : f.backing_store())
+        x = std::min(x, inf_replacement);
 
     return f;
 }

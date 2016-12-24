@@ -3,21 +3,22 @@
 
 
 namespace {
+using RGB8 = std::tuple<unsigned char, unsigned char, unsigned char>;
 
 // shamelessly butchered from wikipedia. tis only for (half-assed) visualisation.
-std::tuple<unsigned char, unsigned char, unsigned char> hue_to_rgb(float const h /*\in [0, 1]*/) {
+RGB8 hue_to_rgb(float const h /*\in [0, 1]*/) {
     auto const s = std::fmod(h, 1) * 6;
     auto const x = (unsigned char)((1 - std::abs(std::fmod(s, 2) - 1)) * 255);
     switch (int(s)) {
-    case 0: return { 255,   x,  0  };
-    case 1: return {   x, 255,  0  };
-    case 2: return {  0 , 255,   x };
-    case 3: return {  0 ,   x, 255 };
-    case 4: return {   x,  0 , 255 };
-    case 5: return { 255,  0 ,   x };
+    case 0: return RGB8 { 255,   x,  0  };
+    case 1: return RGB8 {   x, 255,  0  };
+    case 2: return RGB8 {  0 , 255,   x };
+    case 3: return RGB8 {  0 ,   x, 255 };
+    case 4: return RGB8 {   x,  0 , 255 };
+    case 5: return RGB8 { 255,  0 ,   x };
     }
     assert(false && "unreachable");
-    return { 0, 0, 0 };
+    return RGB8 { 0, 0, 0 };
 };
 
 }
@@ -50,7 +51,7 @@ bool file_write_time_field(char const*    const  file_name
                           ,Field2D<float> const& field_time) {
     float f_min = INFINITY, f_max = -INFINITY;
     for (auto&& x : field_time.backing_store())
-        if (!isinf(x)) { f_min = std::min(f_min, x); f_max = std::max(f_max, x); }
+        if (!std::isinf(x)) { f_min = std::min(f_min, x); f_max = std::max(f_max, x); }
 
     return file_write_time_field(file_name, field_time, f_min, f_max);
 }
@@ -72,7 +73,7 @@ bool file_write_time_field(char const*    const  file_name
         auto const to_hue = [&](float x) { return (5 / 6.f) * (x - f_min) / range; };
         auto       out    = hue.data();
         for (auto&& x : field_time.backing_store()) {
-            if (!isinf(x))
+            if (!std::isinf(x))
                 std::tie(out[0], out[1], out[2]) = hue_to_rgb(to_hue(x));
 
             out += 3;

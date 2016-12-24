@@ -80,7 +80,7 @@ struct BlockWrapper {
 };
 
 
-cl_uint2 to_cl_ui2(uint2 const v) { cl_uint2 a; a.x = v.x; a.y = v.y; return a; };
+cl_uint2 to_cl_ui2(uint2 const v) { return cl_uint2 { v.x, v.y }; };
 
 
 void CL_CALLBACK cl_notify_func(const char* const err_info
@@ -356,7 +356,7 @@ EikonalResult eikonal_hcm_opencl_ex(HcmSetup                  info
 
                 return jobs;
             })();
-            if (max_jobs < num_jobs) __debugbreak();
+            assert(num_jobs <= max_jobs);
             dump_visualisation(blocks_dirty_queue, job_ids.data(), num_jobs);
             /*
             if (blocks_to_dispatch.size() < 10) {
@@ -410,8 +410,8 @@ EikonalResult eikonal_hcm_opencl_ex(HcmSetup                  info
                 for (auto iter = iter_pair.first; iter != iter_pair.second; iter = seed_map.erase(iter)) {
                     assert(dim_in_bounds(block_size_max, uint2(iter->second)));
 
-                    cl_uchar2 xy; xy.x = (*iter).second.x; xy.y = (*iter).second.y;
-                    open_list_vals.push_back(xy);
+                    auto const v = (*iter).second;
+                    open_list_vals.push_back(cl_uchar2 { v.x, v.y });
                 }
                 open_list_sizes.push_back(cl_uint(open_list_vals.size()));
             }
