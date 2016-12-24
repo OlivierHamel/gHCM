@@ -26,3 +26,5 @@ before_install:
 # gen makefile
     - premake-core/bin/release/premake5 gmake
 
+script:
+  - make
