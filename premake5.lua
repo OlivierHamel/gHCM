@@ -30,6 +30,8 @@ project "gHCM"
 
   filter { "system:linux" }
     buildoptions { "-std=c++14", "-stdlib=libc++" }
+    linkoptions { "-v", "-stdlib=libc++" }
+    links { "c++" }
 
   filter "configurations:debug"
     defines   { "DEBUG"   }

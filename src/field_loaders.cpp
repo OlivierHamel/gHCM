@@ -69,7 +69,7 @@ optional<Field2D<float>> field2d_img_rgb_luminosity(char const* const file_path)
         exit(-1); // Don't bother handling this, we're here for solving Eikonals w/ a GPU.
     }
 
-    cl_uint2 img_size = { img->w, img->h };
+    cl_uint2 img_size = { cl_uint(img->w), cl_uint(img->h) };
     auto const ctx          = cl::Context(device_info->device);
     auto       cmd_queue    = cl::CommandQueue(ctx, device_info->device, CL_QUEUE_PROFILING_ENABLE);
     auto const program      = cl_util_build(ctx, { device_info->device }

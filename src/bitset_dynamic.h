@@ -4,6 +4,7 @@
 
 class BitsetDynamic {
     static size_t const kBitsPerWord = sizeof(size_t) * CHAR_BIT;
+    static_assert(kBitsPerWord <= UCHAR_MAX, "BitIndex needs a bigger bitOffset...");
 
     struct BitIndex {
         size_t  wordIndex;
@@ -22,8 +23,8 @@ class BitsetDynamic {
     BitIndex bitIndex(size_t const bitIdx) const {
         dbg_validate();
         assert(bitIdx < size());
-        return { bitIdx / kBitsPerWord
-               , bitIdx % kBitsPerWord };
+        return {         bitIdx / kBitsPerWord
+               , uint8_t(bitIdx % kBitsPerWord) };
     }
 
     size_t bitIndexRev(BitIndex const& bi) const {

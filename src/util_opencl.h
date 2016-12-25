@@ -15,7 +15,7 @@ struct OclDevInfo {
     cl_ulong  memLocal, memGlobal;
     cl_bool   available;
 
-    bool operator<(OclDevInfo const& b) {
+    bool operator<(OclDevInfo const& b) const {
         return std::tie(  type,   available,   hzMax,   memGlobal,   memLocal
                        ,  maxComputeUnits,   maxWorkGroup,   maxConstantBuffer) <
                std::tie(b.type, b.available, b.hzMax, b.memGlobal, b.memLocal
