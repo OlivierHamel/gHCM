@@ -1,4 +1,6 @@
 
+#ifndef PCH_WORKAROUND_CLANG_BUG_H
+#define PCH_WORKAROUND_CLANG_BUG_H
 #pragma once
 
 // C++ headers
@@ -65,3 +67,4 @@ using std::experimental::optional;
 template<typename T, size_t K>
 size_t length_of(T(&)[K]) { return K; }
 
+#endif
