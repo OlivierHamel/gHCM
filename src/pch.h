@@ -63,5 +63,5 @@ using std::experimental::optional;
 
 // handy util
 template<typename T, size_t K>
-inline size_t length_of(T(&)[K]) { return K; }
+size_t length_of(T(&)[K]) { return K; }
 
