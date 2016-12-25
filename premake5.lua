@@ -29,7 +29,7 @@ project "gHCM"
   flags       { }
 
   filter { "system:linux" }
-    buildoptions { "-std=c++14", "-stdlib++" }
+    buildoptions { "-std=c++14", "-stdlib=libc++" }
 
   filter "configurations:debug"
     defines   { "DEBUG"   }
