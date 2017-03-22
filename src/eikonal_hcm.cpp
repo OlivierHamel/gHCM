@@ -358,33 +358,6 @@ EikonalResult eikonal_hcm_opencl_ex(HcmSetup                  info
             })();
             assert(num_jobs <= max_jobs);
             dump_visualisation(blocks_dirty_queue, job_ids.data(), num_jobs);
-            /*
-            if (blocks_to_dispatch.size() < 10) {
-            std::cout << "dispatching blocks (" << blocks_to_dispatch.size() << "):\n";
-            for (auto&& job : blocks_to_dispatch)
-                std::cout << "\tBlock: " << dim_pos(blocks, job.id).x << ", " << dim_pos(blocks, job.id).y << block_infos.status[job.id].smallest_time << "\n";
-            }
-            //*/
-
-#if 0
-            std::cout << "hcm new block set (length " << blocks_dirty_queue.size() << ")\n";
-
-            std::vector<char> visualisation(blocks.x * blocks.y, '_');
-            for (auto&& b : blocks_to_dispatch)
-                visualisation[b.id] = '*';
-
-            for (size_t y = 0; y < blocks.y; ++y) {
-                std::cout << "\t|";
-                for (size_t x = 0; x < blocks.x; ++x)
-                    std::cout << visualisation[dim_idx(blocks, {x, y})];
-                std::cout << "| " << y << "\n";
-                //auto const block_xy = uint2(block_id % blocks.y, block_id / blocks.y);
-                //auto const block_origin = block_xy * k_hcm_block_size;
-                //std::cout << "hcm doing block: " << block_xy.x << ", " << block_xy.y << "\n";
-            }
-#endif
-
-            
 
             std::vector<cl_uchar2> open_list_vals;
             std::vector<cl_uint  > open_list_sizes;
@@ -398,10 +371,6 @@ EikonalResult eikonal_hcm_opencl_ex(HcmSetup                  info
                 //explored_blocks[job.id]++;
                 job_id_min = std::min(job_id_min, job.id);
                 job_id_max = std::max(job_id_max, job.id);
-                //if (explored_blocks[job.id] > 50) {
-                //    //std::cout << "Excessive re-processing " << block_xy.x << ", " << block_xy.y << ": " << explored_blocks[job.id] << "\n";
-                //    do_debug = (num_jobs < 10);
-                //}
 
                 auto const iter_pair = seed_map.equal_range(job.id);
                 if (iter_pair.first == iter_pair.second) continue;
@@ -441,7 +410,7 @@ EikonalResult eikonal_hcm_opencl_ex(HcmSetup                  info
             cl::vector<cl::Event> await_events {job_event};
             // turns out its less expensive on AMD to do a single huge read than try and be fancy
             // about picking out exactly which subset we want.
-            // (no coalescing or API overhead? I hope its just API overhead)
+            // (no coalescing or API overhead? I hope it's just API overhead)
 #if 1
             auto const status_read_offset = job_id_min;
             auto const status_read_length = (job_id_max - job_id_min) + 1;

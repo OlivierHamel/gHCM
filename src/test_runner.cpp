@@ -138,7 +138,10 @@ std::string hcm_config_name(HcmConfig const& config) {
     })();
 
     std::stringstream name;
-    name << "ghcm_" << kernel_mode << "_" << cache_mode << "_cu_over_" << size_t(config.compute_unit_overload) << "_wg_over_" << size_t(config.workers_overload) << "_block_sz_" << size_t(config.block_size);
+    name << "ghcm_" << kernel_mode << "_" << cache_mode
+         << "_cu_over_"  << size_t(config.compute_unit_overload)
+         << "_wg_over_"  << size_t(config.workers_overload)
+         << "_block_sz_" << size_t(config.block_size);
     return name.str();
 };
 
@@ -180,7 +183,8 @@ void test_run(std::string         const& solver_name
         EikonalResult::duration_t dur_total [k_num_trials];
         EikonalResult result;
         for (size_t i = 0; i < k_num_trials; ++i) {
-            std::cout << "Running: " << solver_name << ", " << job.name << ", " << i << " of " << k_num_trials << "\n";
+            std::cout << "Running: " << solver_name << ", " << job.name << ", "
+                      << i << " of " << k_num_trials << "\n";
             result = fn(job.field, seeds);
             dur_device[i] = result.duration_device;
             dur_total [i] = result.duration_total;
@@ -191,7 +195,8 @@ void test_run(std::string         const& solver_name
         auto const f = fopen(path_blob.str().c_str(), "wb"); assert(f);
         fwrite(&x, sizeof(x), 1, f);
         fwrite(&y, sizeof(y), 1, f);
-        fwrite(result.field.backing_store().data(), sizeof(float), result.field.backing_store().size(), f);
+        fwrite(result.field.backing_store().data()
+              ,sizeof(float), result.field.backing_store().size(), f);
         fclose(f);
 
         file_write_time_field((base_path + "_" + job.name + ".png").c_str(), result.field);
@@ -281,7 +286,7 @@ void test_ghcm(cl::Device          const& device
 
 
 void tests_all(cl::Platform const&, cl::Device const& device) {
-#if 1
+#if 0
     HcmConfig hcm_config_base {};
     hcm_config_base.fim_minimum_change      = k_fim_minimum_change;
     hcm_config_base.cache_mode              = HcmConfig::CacheMode::Both;
@@ -310,8 +315,11 @@ void tests_all(cl::Platform const&, cl::Device const& device) {
         , { "sin checkerboard"  , field_cost_sin_checkerboard(parameteric_sz, .75, 20) }
         };
 
-    auto const handle_fmm = std::async(std::launch::async, test_run, "fmm", jobs, seed_points, eikonal_fmm_sequential);
-    auto const handle_fim = std::async(std::launch::async, test_run, "fim", jobs, seed_points, std::bind(eikonal_fim_sequential, k_fim_minimum_change, std::placeholders::_1, std::placeholders::_2));
+    auto const handle_fmm = std::async(std::launch::async, test_run, "fmm", jobs, seed_points
+                                      ,eikonal_fmm_sequential);
+    auto const handle_fim = std::async(std::launch::async, test_run, "fim", jobs, seed_points
+                                      ,std::bind(eikonal_fim_sequential, k_fim_minimum_change
+                                                ,std::placeholders::_1, std::placeholders::_2));
     test_ghcm(device, jobs, seed_points);
 
     handle_fmm.wait();
@@ -334,8 +342,10 @@ void tests_all(cl::Platform const&, cl::Device const& device) {
         };
 
         std::stringstream path_blob_fmm;  path_blob_fmm  << "data/trials/fmm_" << j.name << ".blob";
-        std::stringstream path_blob_ghcm; path_blob_ghcm << "data/trials/" << config_name(config_base) << "_" << j.name << ".blob";
-        std::stringstream ss; ss << "data/trails_fmm_ghcm_diff_" << j.name << ".png";
+        std::stringstream path_blob_ghcm; path_blob_ghcm << "data/trials/"
+                                                         << hcm_config_name(config_base)
+                                                         << "_" << j.name << ".blob";
+        std::stringstream ss; ss << "data/trials_fmm_ghcm_diff_" << j.name << ".png";
         file_write_time_field(ss.str().c_str(), field_diff(load_blob(path_blob_ghcm.str())
                                                           ,load_blob(path_blob_fmm.str())));
     }
