@@ -1,7 +1,7 @@
 
 
 local bIsWindows    = os.get() == "windows"
--- \todo Add OCL for NV? Then again, they give a damn about OCL support so why bother.
+-- \todo Add OCL for NV? Then again, they don't give a damn about OCL support so why bother.
 local strOclIncDir  = bIsWindows and "$(AMDAPPSDKROOT)/include"     or "$(HOME)/AMDAPPSDK/include"
 local strOclLibDir  = bIsWindows and "$(AMDAPPSDKROOT)/lib/x86_64"  or "$(HOME)/AMDAPPSDK/lib/x86_64"
 
@@ -20,8 +20,9 @@ project "gHCM"
   libdirs     { strOclLibDir  }
   links       { "OpenCL"      } -- either a project's name, or the name of a sys lib w/o ext
 
-  pchheader "pch.h"
-  pchsource "src/pch.cpp"
+  --- \fixme Temporarily disabled PCH due to oddity in latest premake5 & Travis CI
+  --pchheader "pch.h"
+  --pchsource "src/pch.cpp"
 
   forceincludes "pch.h"
 
